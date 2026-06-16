@@ -58,6 +58,16 @@ public static class ApplicationDbContextSeed
             var csharpSkill = await context.Skills.FirstOrDefaultAsync(s => s.Name == "C#");
             var netSkill = await context.Skills.FirstOrDefaultAsync(s => s.Name == ".NET 10 / Web API");
             var postgresSkill = await context.Skills.FirstOrDefaultAsync(s => s.Name == "PostgreSQL");
+            var project = new Projects
+            {
+                Name = "RESTful API Service - Clean Architecture",
+                Description = "A robust RESTful API built using ASP.NET Core and Entity Framework Core, adhering to Clean Architecture principles with PostgreSQL as the data store.",
+                Thumbnail = "",
+                GithubUrl = "https://github.com/ndqd0311/portfolio",
+                WebsiteUrl = "https://portfolio-demo.com",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
             await context.Projects.AddAsync(project);
             await context.SaveChangesAsync();
