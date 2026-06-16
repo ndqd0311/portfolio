@@ -6,29 +6,17 @@ import { fetchApi } from '@/utils/api';
 
 export default function BlogsPage() {
   const [blogs, setBlogs] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
   const [contacts, setContacts] = useState({ email: '' });
 
   useEffect(() => {
     async function loadData() {
       try {
         const blogsData = await fetchApi('/api/blogs');
-        // Filter only published ones
-        const publishedBlogs = blogsData.filter(b => b.isPublished);
-
-        // Dynamically assign a category for UI display
-        const enrichedBlogs = publishedBlogs.map(blog => {
-          let category = 'Engineering';
-          const title = blog.name.toLowerCase();
-          if (title.includes('sql') || title.includes('postgres') || title.includes('db') || title.includes('database') || title.includes('query')) {
-            category = 'Databases';
-          } else if (title.includes('workflow') || title.includes('git') || title.includes('docker') || title.includes('ci/cd') || title.includes('devops')) {
-            category = 'Workflow';
-          }
-          return { ...blog, category };
-        });
-
-        setBlogs(enrichedBlogs);
+        // Filter only published ones and sort by date descending
+        const publishedBlogs = blogsData
+          .filter(b => b.isPublished)
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setBlogs(publishedBlogs);
       } catch (err) {
         console.error('Error fetching blogs:', err);
       }
@@ -77,13 +65,7 @@ export default function BlogsPage() {
     return () => {
       elements.forEach(el => observer.unobserve(el));
     };
-  }, [blogs, selectedCategory]);
-
-  const categories = ['All', 'Engineering', 'Databases', 'Workflow'];
-
-  const filteredBlogs = selectedCategory === 'All'
-    ? blogs
-    : blogs.filter(b => b.category === selectedCategory);
+  }, [blogs]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -120,33 +102,17 @@ export default function BlogsPage() {
       {/* Main Content */}
       <main className="flex-grow pt-32 px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto w-full">
         <section className="py-12 reveal">
-          <div className="text-center max-w-2xl mx-auto mb-12">
+          <div className="text-center max-w-2xl mx-auto mb-16">
             <h1 className="font-sora text-4xl md:text-5xl font-bold text-on-surface mb-4">Insights & Archives</h1>
             <p className="font-sans text-body-lg text-on-surface-variant">
               Exploring backend engineering paradigms, system designs, database optimizations, and modern software architectures.
             </p>
           </div>
 
-          {/* Category Chips */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-5 py-2 rounded-full font-mono text-xs uppercase transition-all duration-300 ${selectedCategory === cat
-                    ? 'bg-electric-cyan text-on-primary-fixed font-semibold scale-105'
-                    : 'bg-white/5 border border-white/5 text-on-surface-variant hover:text-electric-cyan'
-                  }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
           {/* Blog Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 staggered-container">
-            {filteredBlogs.length > 0 ? (
-              filteredBlogs.map((blog) => (
+            {blogs.length > 0 ? (
+              blogs.map((blog) => (
                 <Link
                   href={`/blog/${blog.slug}`}
                   key={blog.id}
@@ -154,9 +120,6 @@ export default function BlogsPage() {
                 >
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="font-mono text-[10px] px-3 py-1 rounded-full border border-electric-cyan/25 bg-electric-cyan/5 text-electric-cyan uppercase">
-                        {blog.category}
-                      </span>
                       <time className="font-mono text-[11px] text-on-surface-variant uppercase">
                         {new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </time>
@@ -177,7 +140,7 @@ export default function BlogsPage() {
             ) : (
               <div className="col-span-3 text-center text-on-surface-variant py-24 glass-card rounded-2xl border border-white/5">
                 <span className="material-symbols-outlined text-4xl text-on-surface-variant/40 mb-2">article</span>
-                <p>No articles found matching this filter.</p>
+                <p>No articles found.</p>
               </div>
             )}
           </div>

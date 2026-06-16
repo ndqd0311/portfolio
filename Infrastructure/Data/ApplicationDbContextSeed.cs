@@ -45,7 +45,7 @@ public static class ApplicationDbContextSeed
             {
                 new Skills { Name = "C#", Category = "Backend", Proficiency = "90%" },
                 new Skills { Name = ".NET 10 / Web API", Category = "Backend", Proficiency = "85%" },
-                new Skills { Name = "PostgreSQL / SQL Server", Category = "Database", Proficiency = "80%" },
+                new Skills { Name = "PostgreSQL", Category = "Database", Proficiency = "80%" },
                 new Skills { Name = "Docker", Category = "DevOps", Proficiency = "75%" }
             };
             await context.Skills.AddRangeAsync(skills);
@@ -57,18 +57,7 @@ public static class ApplicationDbContextSeed
         {
             var csharpSkill = await context.Skills.FirstOrDefaultAsync(s => s.Name == "C#");
             var netSkill = await context.Skills.FirstOrDefaultAsync(s => s.Name == ".NET 10 / Web API");
-            var postgresSkill = await context.Skills.FirstOrDefaultAsync(s => s.Name == "PostgreSQL / SQL Server");
-
-            var project = new Projects
-            {
-                Name = "RESTful API Service - Clean Architecture",
-                Description = "A robust RESTful API built using ASP.NET Core and Entity Framework Core, adhering to Clean Architecture principles with PostgreSQL as the data store.",
-                Thumbnail = "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8",
-                GithubUrl = "https://github.com/admin/portfolio",
-                WebsiteUrl = "https://portfolio-demo.com",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+            var postgresSkill = await context.Skills.FirstOrDefaultAsync(s => s.Name == "PostgreSQL");
 
             await context.Projects.AddAsync(project);
             await context.SaveChangesAsync();
