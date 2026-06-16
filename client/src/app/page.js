@@ -64,11 +64,6 @@ export default function HomePage() {
     let particles = [];
     let frameCount = 0;
 
-    // Planet System properties
-    let planetX = canvas.width * 0.75;
-    let planetY = canvas.height * 0.35;
-    let planetRadius = 45;
-
     // Mouse movement tracking for interactive parallax
     let mouse = { x: canvas.width / 2, y: canvas.height / 2, targetX: canvas.width / 2, targetY: canvas.height / 2 };
 
@@ -80,16 +75,152 @@ export default function HomePage() {
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      planetX = canvas.width * 0.75;
-      if (canvas.width < 768) {
-        planetX = canvas.width * 0.8;
-      }
-      planetY = canvas.height * 0.35;
     };
 
     window.addEventListener('resize', resize);
     window.addEventListener('mousemove', handleMouseMove);
     resize();
+
+    // Helper math functions for keyframe interpolation
+    const lerp = (start, end, amt) => {
+      return (1 - amt) * start + amt * end;
+    };
+
+    const parseRgba = (colorStr) => {
+      const match = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if (match) {
+        return {
+          r: parseInt(match[1]),
+          g: parseInt(match[2]),
+          b: parseInt(match[3]),
+          a: match[4] !== undefined ? parseFloat(match[4]) : 1.0
+        };
+      }
+      if (colorStr.startsWith('#')) {
+        let clean = colorStr.replace('#', '');
+        if (clean.length === 3) {
+          clean = clean.split('').map(c => c + c).join('');
+        }
+        return {
+          r: parseInt(clean.substring(0, 2), 16),
+          g: parseInt(clean.substring(2, 4), 16),
+          b: parseInt(clean.substring(4, 6), 16),
+          a: 1.0
+        };
+      }
+      return { r: 0, g: 0, b: 0, a: 1.0 };
+    };
+
+    const lerpColor = (colorStr1, colorStr2, amt) => {
+      const c1 = parseRgba(colorStr1);
+      const c2 = parseRgba(colorStr2);
+      
+      const r = Math.round(lerp(c1.r, c2.r, amt));
+      const g = Math.round(lerp(c1.g, c2.g, amt));
+      const b = Math.round(lerp(c1.b, c2.b, amt));
+      const a = lerp(c1.a, c2.a, amt);
+      
+      return `rgba(${r}, ${g}, ${b}, ${a})`;
+    };
+
+    // Define planet styles corresponding to page sections
+    const keyframes = [
+      {
+        // 0: Hero
+        scrollRatio: 0.0,
+        xPct: (w) => w < 768 ? 0.8 : 0.75,
+        yPct: 0.35,
+        radius: 45,
+        color1: '#00F0FF',
+        color2: '#002C4D',
+        color3: '#0B0D19',
+        ringColor1: 'rgba(0, 240, 255, 0.7)',
+        ringColor2: 'rgba(255, 0, 200, 0.3)',
+        ringWidth: 14,
+        ringTilt: -18 * Math.PI / 180,
+        ringScaleY: 0.18,
+        moons: [
+          { rA: 90, rB: 20, tilt: -18 * Math.PI / 180, speed: 0.02, color: 'rgba(0, 240, 255, 1)', glow: 'rgba(0, 240, 255, 1)', size: 4 },
+          { rA: 150, rB: 35, tilt: 12 * Math.PI / 180, speed: -0.012, color: 'rgba(255, 0, 200, 1)', glow: 'rgba(255, 0, 200, 1)', size: 6 }
+        ]
+      },
+      {
+        // 1: Selected Works (Projects)
+        scrollRatio: 0.25,
+        xPct: (w) => w < 768 ? 0.85 : 0.15,
+        yPct: 0.55,
+        radius: 38,
+        color1: '#00FF87',
+        color2: '#003B20',
+        color3: '#050D08',
+        ringColor1: 'rgba(0, 255, 135, 0.6)',
+        ringColor2: 'rgba(255, 235, 59, 0.2)',
+        ringWidth: 10,
+        ringTilt: 25 * Math.PI / 180,
+        ringScaleY: 0.22,
+        moons: [
+          { rA: 75, rB: 18, tilt: 25 * Math.PI / 180, speed: 0.03, color: 'rgba(0, 255, 135, 1)', glow: 'rgba(0, 255, 135, 1)', size: 3.5 },
+          { rA: 120, rB: 28, tilt: -10 * Math.PI / 180, speed: -0.015, color: 'rgba(0, 255, 135, 0)', glow: 'rgba(0, 255, 135, 0)', size: 0 }
+        ]
+      },
+      {
+        // 2: Technical Mastery (Skills)
+        scrollRatio: 0.50,
+        xPct: (w) => w < 768 ? 0.15 : 0.82,
+        yPct: 0.40,
+        radius: 55,
+        color1: '#FF8C00',
+        color2: '#4B1A00',
+        color3: '#100502',
+        ringColor1: 'rgba(255, 140, 0, 0.7)',
+        ringColor2: 'rgba(139, 0, 0, 0.3)',
+        ringWidth: 26,
+        ringTilt: -10 * Math.PI / 180,
+        ringScaleY: 0.15,
+        moons: [
+          { rA: 110, rB: 15, tilt: -10 * Math.PI / 180, speed: -0.025, color: 'rgba(255, 140, 0, 1)', glow: 'rgba(255, 140, 0, 1)', size: 4 },
+          { rA: 160, rB: 22, tilt: 15 * Math.PI / 180, speed: 0.015, color: 'rgba(255, 215, 0, 1)', glow: 'rgba(255, 215, 0, 1)', size: 5 }
+        ]
+      },
+      {
+        // 3: Digital Archive (Blog)
+        scrollRatio: 0.75,
+        xPct: (w) => w < 768 ? 0.85 : 0.12,
+        yPct: 0.35,
+        radius: 40,
+        color1: '#FF007F',
+        color2: '#2E004B',
+        color3: '#06010D',
+        ringColor1: 'rgba(255, 0, 127, 0.5)',
+        ringColor2: 'rgba(0, 240, 255, 0.2)',
+        ringWidth: 8,
+        ringTilt: 80 * Math.PI / 180,
+        ringScaleY: 0.12,
+        moons: [
+          { rA: 80, rB: 10, tilt: 80 * Math.PI / 180, speed: 0.02, color: 'rgba(255, 0, 127, 1)', glow: 'rgba(255, 0, 127, 1)', size: 3.5 },
+          { rA: 120, rB: 15, tilt: -35 * Math.PI / 180, speed: -0.015, color: 'rgba(0, 240, 255, 1)', glow: 'rgba(0, 240, 255, 1)', size: 4 }
+        ]
+      },
+      {
+        // 4: Get In Touch (Contact)
+        scrollRatio: 1.0,
+        xPct: 0.50,
+        yPct: 0.50,
+        radius: 80,
+        color1: '#00F0FF',
+        color2: '#020308',
+        color3: '#000000',
+        ringColor1: 'rgba(0, 240, 255, 0)',
+        ringColor2: 'rgba(255, 0, 200, 0)',
+        ringWidth: 0,
+        ringTilt: 0,
+        ringScaleY: 0,
+        moons: [
+          { rA: 140, rB: 35, tilt: -15 * Math.PI / 180, speed: 0.03, color: 'rgba(0, 240, 255, 0.8)', glow: 'rgba(0, 240, 255, 0.8)', size: 5 },
+          { rA: 200, rB: 50, tilt: 30 * Math.PI / 180, speed: -0.015, color: 'rgba(255, 0, 200, 0.8)', glow: 'rgba(255, 0, 200, 0.8)', size: 7 }
+        ]
+      }
+    ];
 
     class Particle {
       constructor() {
@@ -126,6 +257,45 @@ export default function HomePage() {
     }
 
     const drawPlanetSystem = (time) => {
+      // Calculate global scroll progress percentage
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = maxScroll > 0 ? Math.min(Math.max(window.scrollY / maxScroll, 0), 1) : 0;
+      
+      // Find the bounding keyframes
+      let kfStart = keyframes[0];
+      let kfEnd = keyframes[keyframes.length - 1];
+      
+      for (let i = 0; i < keyframes.length - 1; i++) {
+        if (scrollPercent >= keyframes[i].scrollRatio && scrollPercent <= keyframes[i+1].scrollRatio) {
+          kfStart = keyframes[i];
+          kfEnd = keyframes[i+1];
+          break;
+        }
+      }
+      
+      // Calculate local interpolation ratio between the two keyframes
+      const range = kfEnd.scrollRatio - kfStart.scrollRatio;
+      const t = range > 0 ? (scrollPercent - kfStart.scrollRatio) / range : 0;
+
+      // Get dynamic positions based on window width
+      const getX = (kf) => typeof kf.xPct === 'function' ? kf.xPct(window.innerWidth) : kf.xPct;
+      const getY = (kf) => typeof kf.yPct === 'function' ? kf.yPct(window.innerHeight) : kf.yPct;
+
+      // Linear interpolation (lerp) of planet properties
+      const currentXPct = lerp(getX(kfStart), getX(kfEnd), t);
+      const currentYPct = lerp(getY(kfStart), getY(kfEnd), t);
+      
+      const planetRadius = lerp(kfStart.radius, kfEnd.radius, t);
+      const color1 = lerpColor(kfStart.color1, kfEnd.color1, t);
+      const color2 = lerpColor(kfStart.color2, kfEnd.color2, t);
+      const color3 = lerpColor(kfStart.color3, kfEnd.color3, t);
+      
+      const ringColor1 = lerpColor(kfStart.ringColor1, kfEnd.ringColor1, t);
+      const ringColor2 = lerpColor(kfStart.ringColor2, kfEnd.ringColor2, t);
+      const ringWidth = lerp(kfStart.ringWidth, kfEnd.ringWidth, t);
+      const ringTilt = lerp(kfStart.ringTilt, kfEnd.ringTilt, t);
+      const ringScaleY = lerp(kfStart.ringScaleY, kfEnd.ringScaleY, t);
+
       // Gentle floating motion
       const floatOffset = Math.sin(time * 0.015) * 10;
       
@@ -136,22 +306,8 @@ export default function HomePage() {
       const mouseOffsetX = (mouse.x - canvas.width / 2) * 0.03;
       const mouseOffsetY = (mouse.y - canvas.height / 2) * 0.03;
       
-      const cx = planetX + mouseOffsetX;
-      const cy = planetY + mouseOffsetY + floatOffset;
-      
-      // Orbit 1: Cyber-cyan inner satellite
-      const orbit1_a = 90;
-      const orbit1_b = 20;
-      const orbit1_tilt = -18 * Math.PI / 180;
-      const moon1_speed = 0.02;
-      const moon1_angle = time * moon1_speed;
-      
-      // Orbit 2: Hot-magenta outer satellite
-      const orbit2_a = 150;
-      const orbit2_b = 35;
-      const orbit2_tilt = 12 * Math.PI / 180;
-      const moon2_speed = -0.012;
-      const moon2_angle = time * moon2_speed;
+      const cx = (currentXPct * canvas.width) + mouseOffsetX;
+      const cy = (currentYPct * canvas.height) + mouseOffsetY + floatOffset;
 
       const drawOrbitRing = (rx, ry, tilt, color) => {
         ctx.save();
@@ -180,13 +336,7 @@ export default function HomePage() {
         };
       };
 
-      const moon1 = getMoonPos(orbit1_a, orbit1_b, orbit1_tilt, moon1_angle);
-      const moon2 = getMoonPos(orbit2_a, orbit2_b, orbit2_tilt, moon2_angle);
-
-      // 1. Draw orbits
-      drawOrbitRing(orbit1_a, orbit1_b, orbit1_tilt, 'rgba(0, 240, 255, 0.05)');
-      drawOrbitRing(orbit2_a, orbit2_b, orbit2_tilt, 'rgba(255, 0, 200, 0.03)');
-
+      // Draw moons helper
       const drawMoon = (moon, radius, baseColor, glowColor) => {
         const depthScale = (moon.depth + 1) / 2; // 0 to 1
         const scale = 0.6 + depthScale * 0.6;
@@ -195,21 +345,54 @@ export default function HomePage() {
         ctx.save();
         ctx.beginPath();
         ctx.arc(moon.x, moon.y, radius * scale, 0, Math.PI * 2);
-        ctx.fillStyle = baseColor.replace('1)', `${opacity})`);
+        ctx.fillStyle = baseColor.replace(/[\d.]+\)/, `${opacity})`);
         ctx.shadowBlur = 12;
         ctx.shadowColor = glowColor;
         ctx.fill();
         ctx.restore();
       };
 
+      // Interpolate moons
+      const moons = kfStart.moons.map((startMoon, idx) => {
+        const endMoon = kfEnd.moons[idx];
+        const angle = time * lerp(startMoon.speed, endMoon.speed, t);
+        const interpolatedMoon = getMoonPos(
+          lerp(startMoon.rA, endMoon.rA, t),
+          lerp(startMoon.rB, endMoon.rB, t),
+          lerp(startMoon.tilt, endMoon.tilt, t),
+          angle
+        );
+        return {
+          ...interpolatedMoon,
+          size: lerp(startMoon.size, endMoon.size, t),
+          color: lerpColor(startMoon.color, endMoon.color, t),
+          glow: lerpColor(startMoon.glow, endMoon.glow, t)
+        };
+      });
+
+      // 1. Draw orbits (if size is visible)
+      moons.forEach(m => {
+        if (m.size > 0.1) {
+          drawOrbitRing(
+            lerp(kfStart.moons[0].rA, kfEnd.moons[0].rA, t),
+            lerp(kfStart.moons[0].rB, kfEnd.moons[0].rB, t),
+            lerp(kfStart.moons[0].tilt, kfEnd.moons[0].tilt, t),
+            'rgba(255, 255, 255, 0.03)'
+          );
+        }
+      });
+
       // 2. Draw moons in the background
-      if (moon1.isBehind) drawMoon(moon1, 4, 'rgba(0, 240, 255, 1)', '#00F0FF');
-      if (moon2.isBehind) drawMoon(moon2, 6, 'rgba(255, 0, 200, 1)', '#FF00C8');
+      moons.forEach(m => {
+        if (m.isBehind && m.size > 0.1) {
+          drawMoon(m, m.size, m.color, m.glow);
+        }
+      });
 
       // 3. Draw outer atmospheric glow
       ctx.save();
       const outerGlow = ctx.createRadialGradient(cx, cy, planetRadius - 5, cx, cy, planetRadius + 30);
-      outerGlow.addColorStop(0, 'rgba(0, 240, 255, 0.2)');
+      outerGlow.addColorStop(0, 'rgba(0, 240, 255, 0.25)');
       outerGlow.addColorStop(0.5, 'rgba(255, 0, 200, 0.08)');
       outerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = outerGlow;
@@ -228,9 +411,9 @@ export default function HomePage() {
         cy, 
         planetRadius
       );
-      planetGradient.addColorStop(0, '#00F0FF');
-      planetGradient.addColorStop(0.3, '#002C4D');
-      planetGradient.addColorStop(0.8, '#0B0D19');
+      planetGradient.addColorStop(0, color1);
+      planetGradient.addColorStop(0.3, color2);
+      planetGradient.addColorStop(0.8, color3);
       planetGradient.addColorStop(1, '#020308');
       
       ctx.fillStyle = planetGradient;
@@ -239,28 +422,33 @@ export default function HomePage() {
       ctx.fill();
       ctx.restore();
 
-      // 5. Draw flat tilted equatorial rings
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(orbit1_tilt);
-      ctx.scale(1, 0.18);
-      
-      const ringGrad = ctx.createRadialGradient(0, 0, planetRadius + 8, 0, 0, planetRadius + 35);
-      ringGrad.addColorStop(0, 'rgba(0, 240, 255, 0.7)');
-      ringGrad.addColorStop(0.4, 'rgba(0, 240, 255, 0.1)');
-      ringGrad.addColorStop(0.7, 'rgba(255, 0, 200, 0.3)');
-      ringGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      
-      ctx.strokeStyle = ringGrad;
-      ctx.lineWidth = 14;
-      ctx.beginPath();
-      ctx.arc(0, 0, planetRadius + 20, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
+      // 5. Draw flat tilted equatorial rings (if ringWidth > 0)
+      if (ringWidth > 0.5) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(ringTilt);
+        ctx.scale(1, ringScaleY);
+        
+        const ringGrad = ctx.createRadialGradient(0, 0, planetRadius + 8, 0, 0, planetRadius + ringWidth + 10);
+        ringGrad.addColorStop(0, ringColor1);
+        ringGrad.addColorStop(0.4, 'rgba(0, 240, 255, 0.05)');
+        ringGrad.addColorStop(0.7, ringColor2);
+        ringGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        
+        ctx.strokeStyle = ringGrad;
+        ctx.lineWidth = ringWidth;
+        ctx.beginPath();
+        ctx.arc(0, 0, planetRadius + 15, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
 
       // 6. Draw moons in the foreground
-      if (!moon1.isBehind) drawMoon(moon1, 4, 'rgba(0, 240, 255, 1)', '#00F0FF');
-      if (!moon2.isBehind) drawMoon(moon2, 6, 'rgba(255, 0, 200, 1)', '#FF00C8');
+      moons.forEach(m => {
+        if (!m.isBehind && m.size > 0.1) {
+          drawMoon(m, m.size, m.color, m.glow);
+        }
+      });
     };
 
     const animate = () => {
@@ -387,6 +575,11 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <canvas
+        ref={canvasRef}
+        id="hero-canvas"
+        className="fixed inset-0 w-full h-full pointer-events-none z-0"
+      />
       {/* TopNavBar */}
       <nav
         ref={navRef}
@@ -430,14 +623,9 @@ export default function HomePage() {
         </a>
       </nav>
 
-      <main className="flex-grow">
+      <main className="flex-grow relative z-10">
         {/* Hero Section */}
         <section className="relative min-h-screen flex flex-col items-center justify-center pt-32 px-margin-mobile md:px-margin-desktop overflow-hidden">
-          <canvas
-            ref={canvasRef}
-            id="hero-canvas"
-            className="absolute inset-0 w-full h-full pointer-events-none"
-          />
           <div className="relative z-10 text-center max-w-4xl reveal animate-reveal">
             <div className="inline-block py-1 px-4 mb-6 rounded-full border border-electric-cyan/20 bg-electric-cyan/5 ambient-float">
               <span className="font-mono text-label-mono text-electric-cyan uppercase tracking-widest text-xs">Available for new opportunities</span>
@@ -749,7 +937,7 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-white/5 bg-background reveal">
+      <footer className="w-full border-t border-white/5 bg-background reveal relative z-10">
         <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center py-16 px-margin-desktop gap-8">
           <div className="flex flex-col items-center md:items-start gap-4 text-center md:text-left">
             <div className="font-mono text-body-lg text-electric-cyan font-bold">QD</div>
