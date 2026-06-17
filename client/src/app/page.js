@@ -114,12 +114,12 @@ export default function HomePage() {
     const lerpColor = (colorStr1, colorStr2, amt) => {
       const c1 = parseRgba(colorStr1);
       const c2 = parseRgba(colorStr2);
-      
+
       const r = Math.round(lerp(c1.r, c2.r, amt));
       const g = Math.round(lerp(c1.g, c2.g, amt));
       const b = Math.round(lerp(c1.b, c2.b, amt));
       const a = lerp(c1.a, c2.a, amt);
-      
+
       return `rgba(${r}, ${g}, ${b}, ${a})`;
     };
 
@@ -222,28 +222,6 @@ export default function HomePage() {
       }
     ];
 
-    // Distant background planets with parallax scrolling
-    const backgroundPlanets = [
-      {
-        xPct: 0.15,
-        yPct: 0.75, // Bottom left
-        radius: 20,
-        color1: 'rgba(255, 0, 200, 0.15)',
-        color2: 'rgba(46, 0, 75, 0.08)',
-        glow: 'rgba(255, 0, 200, 0.1)',
-        parallaxFactor: 0.05
-      },
-      {
-        xPct: 0.85,
-        yPct: 0.15, // Top right
-        radius: 15,
-        color1: 'rgba(0, 255, 135, 0.12)',
-        color2: 'rgba(0, 59, 32, 0.06)',
-        glow: 'rgba(0, 255, 135, 0.08)',
-        parallaxFactor: 0.03
-      }
-    ];
-
     class Particle {
       constructor() {
         this.init();
@@ -252,119 +230,49 @@ export default function HomePage() {
       init() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 1.5 + 0.3;
-        this.speedX = (Math.random() - 0.5) * 0.15;
-        this.speedY = (Math.random() - 0.5) * 0.15;
-        this.baseOpacity = Math.random() * 0.4 + 0.1;
-        this.twinklePhase = Math.random() * Math.PI * 2;
-        this.twinkleSpeed = 0.005 + Math.random() * 0.015;
-        
-        const colors = [
-          'rgba(0, 240, 255,',   // Cyan
-          'rgba(255, 0, 200,',   // Magenta
-          'rgba(255, 255, 255,', // White
-          'rgba(197, 160, 89,'   // Gold
-        ];
-        this.colorPrefix = colors[Math.floor(Math.random() * colors.length)];
+        this.size = Math.random() * 1.5 + 0.5;
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.speedY = (Math.random() - 0.5) * 0.3;
+        this.opacity = Math.random() * 0.4 + 0.1;
       }
 
       update() {
         this.x += this.speedX;
         this.y += this.speedY;
-        this.twinklePhase += this.twinkleSpeed;
 
         if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
         if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
       }
 
       draw() {
-        const opacity = this.baseOpacity + Math.sin(this.twinklePhase) * 0.25;
-        const finalOpacity = Math.min(Math.max(opacity, 0.05), 0.7);
-        
-        ctx.fillStyle = `${this.colorPrefix}${finalOpacity})`;
+        ctx.fillStyle = `rgba(0, 240, 255, ${this.opacity})`;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    class ShootingStar {
-      constructor() {
-        this.reset();
-      }
-
-      reset() {
-        this.x = Math.random() * canvas.width * 0.8 + canvas.width * 0.2;
-        this.y = Math.random() * canvas.height * 0.4;
-        this.len = Math.random() * 80 + 40;
-        this.speed = Math.random() * 10 + 8;
-        this.dx = -this.speed;
-        this.dy = this.speed * 0.6;
-        this.opacity = 1.0;
-        this.active = false;
-      }
-
-      trigger() {
-        this.active = true;
-      }
-
-      update() {
-        if (!this.active) return;
-        this.x += this.dx;
-        this.y += this.dy;
-        this.opacity -= 0.025;
-
-        if (this.opacity <= 0 || this.x < -100 || this.y > canvas.height + 100) {
-          this.reset();
-        }
-      }
-
-      draw() {
-        if (!this.active) return;
-        ctx.save();
-        
-        const grad = ctx.createLinearGradient(this.x, this.y, this.x - this.dx * 1.5, this.y - this.dy * 1.5);
-        grad.addColorStop(0, `rgba(0, 240, 255, ${this.opacity})`);
-        grad.addColorStop(0.3, `rgba(255, 0, 200, ${this.opacity * 0.5})`);
-        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x - this.dx, this.y - this.dy);
-        ctx.stroke();
-        ctx.restore();
-      }
-    }
-
-    let shootingStars = [];
-
-    for (let i = 0; i < 85; i++) {
+    for (let i = 0; i < 40; i++) {
       particles.push(new Particle());
-    }
-
-    for (let i = 0; i < 2; i++) {
-      shootingStars.push(new ShootingStar());
     }
 
     const drawPlanetSystem = (time) => {
       // Calculate global scroll progress percentage
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       const scrollPercent = maxScroll > 0 ? Math.min(Math.max(window.scrollY / maxScroll, 0), 1) : 0;
-      
+
       // Find the bounding keyframes
       let kfStart = keyframes[0];
       let kfEnd = keyframes[keyframes.length - 1];
-      
+
       for (let i = 0; i < keyframes.length - 1; i++) {
-        if (scrollPercent >= keyframes[i].scrollRatio && scrollPercent <= keyframes[i+1].scrollRatio) {
+        if (scrollPercent >= keyframes[i].scrollRatio && scrollPercent <= keyframes[i + 1].scrollRatio) {
           kfStart = keyframes[i];
-          kfEnd = keyframes[i+1];
+          kfEnd = keyframes[i + 1];
           break;
         }
       }
-      
+
       // Calculate local interpolation ratio between the two keyframes
       const range = kfEnd.scrollRatio - kfStart.scrollRatio;
       const t = range > 0 ? (scrollPercent - kfStart.scrollRatio) / range : 0;
@@ -376,12 +284,12 @@ export default function HomePage() {
       // Linear interpolation (lerp) of planet properties
       const currentXPct = lerp(getX(kfStart), getX(kfEnd), t);
       const currentYPct = lerp(getY(kfStart), getY(kfEnd), t);
-      
+
       const planetRadius = lerp(kfStart.radius, kfEnd.radius, t);
       const color1 = lerpColor(kfStart.color1, kfEnd.color1, t);
       const color2 = lerpColor(kfStart.color2, kfEnd.color2, t);
       const color3 = lerpColor(kfStart.color3, kfEnd.color3, t);
-      
+
       const ringColor1 = lerpColor(kfStart.ringColor1, kfEnd.ringColor1, t);
       const ringColor2 = lerpColor(kfStart.ringColor2, kfEnd.ringColor2, t);
       const ringWidth = lerp(kfStart.ringWidth, kfEnd.ringWidth, t);
@@ -390,44 +298,16 @@ export default function HomePage() {
 
       // Gentle floating motion
       const floatOffset = Math.sin(time * 0.015) * 10;
-      
+
       // Interpolate mouse movements smoothly
       mouse.x += (mouse.targetX - mouse.x) * 0.05;
       mouse.y += (mouse.targetY - mouse.y) * 0.05;
-      
+
       const mouseOffsetX = (mouse.x - canvas.width / 2) * 0.03;
       const mouseOffsetY = (mouse.y - canvas.height / 2) * 0.03;
-      
+
       const cx = (currentXPct * canvas.width) + mouseOffsetX;
       const cy = (currentYPct * canvas.height) + mouseOffsetY + floatOffset;
-
-      // Draw distant background planets
-      backgroundPlanets.forEach(bp => {
-        const parallaxY = -window.scrollY * bp.parallaxFactor;
-        const bpx = bp.xPct * canvas.width;
-        const bpy = (bp.yPct * canvas.height) + parallaxY + Math.sin(time * 0.005 + bp.xPct * 100) * 5;
-
-        // Draw glow
-        ctx.save();
-        const glowGrad = ctx.createRadialGradient(bpx, bpy, bp.radius - 2, bpx, bpy, bp.radius + 15);
-        glowGrad.addColorStop(0, bp.color1);
-        glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = glowGrad;
-        ctx.beginPath();
-        ctx.arc(bpx, bpy, bp.radius + 15, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Draw planet core
-        const coreGrad = ctx.createRadialGradient(bpx - bp.radius * 0.2, bpy - bp.radius * 0.2, bp.radius * 0.1, bpx, bpy, bp.radius);
-        coreGrad.addColorStop(0, bp.color1);
-        coreGrad.addColorStop(0.5, bp.color2);
-        coreGrad.addColorStop(1, '#050505');
-        ctx.fillStyle = coreGrad;
-        ctx.beginPath();
-        ctx.arc(bpx, bpy, bp.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      });
 
       const drawOrbitRing = (rx, ry, tilt, color) => {
         ctx.save();
@@ -461,7 +341,7 @@ export default function HomePage() {
         const depthScale = (moon.depth + 1) / 2; // 0 to 1
         const scale = 0.6 + depthScale * 0.6;
         const opacity = 0.3 + depthScale * 0.7;
-        
+
         ctx.save();
         ctx.beginPath();
         ctx.arc(moon.x, moon.y, radius * scale, 0, Math.PI * 2);
@@ -524,18 +404,18 @@ export default function HomePage() {
       // 4. Draw Planet core with glowing 3D lighting gradient
       ctx.save();
       const planetGradient = ctx.createRadialGradient(
-        cx - planetRadius * 0.3, 
-        cy - planetRadius * 0.3, 
-        planetRadius * 0.1, 
-        cx, 
-        cy, 
+        cx - planetRadius * 0.3,
+        cy - planetRadius * 0.3,
+        planetRadius * 0.1,
+        cx,
+        cy,
         planetRadius
       );
       planetGradient.addColorStop(0, color1);
       planetGradient.addColorStop(0.3, color2);
       planetGradient.addColorStop(0.8, color3);
       planetGradient.addColorStop(1, '#020308');
-      
+
       ctx.fillStyle = planetGradient;
       ctx.beginPath();
       ctx.arc(cx, cy, planetRadius, 0, Math.PI * 2);
@@ -548,13 +428,13 @@ export default function HomePage() {
         ctx.translate(cx, cy);
         ctx.rotate(ringTilt);
         ctx.scale(1, ringScaleY);
-        
+
         const ringGrad = ctx.createRadialGradient(0, 0, planetRadius + 8, 0, 0, planetRadius + ringWidth + 10);
         ringGrad.addColorStop(0, ringColor1);
         ringGrad.addColorStop(0.4, 'rgba(0, 240, 255, 0.05)');
         ringGrad.addColorStop(0.7, ringColor2);
         ringGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        
+
         ctx.strokeStyle = ringGrad;
         ctx.lineWidth = ringWidth;
         ctx.beginPath();
@@ -574,17 +454,6 @@ export default function HomePage() {
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       frameCount++;
-      
-      // Update & Draw Shooting Stars
-      if (Math.random() < 0.003) {
-        const inactiveStar = shootingStars.find(s => !s.active);
-        if (inactiveStar) inactiveStar.trigger();
-      }
-      
-      shootingStars.forEach(s => {
-        s.update();
-        s.draw();
-      });
 
       particles.forEach(p => {
         p.update();
@@ -592,7 +461,7 @@ export default function HomePage() {
       });
 
       drawPlanetSystem(frameCount);
-      
+
       animationFrameId = requestAnimationFrame(animate);
     };
 
@@ -717,8 +586,8 @@ export default function HomePage() {
         className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[1280px] rounded-full border border-white/10 z-50 bg-background/80 backdrop-blur-[20px] shadow-2xl flex justify-between items-center px-8 py-4 transition-all duration-500 ease-in-out"
         id="main-nav"
       >
-        <Link 
-          href="/" 
+        <Link
+          href="/"
           onClick={(e) => {
             if (window.location.pathname === '/') {
               e.preventDefault();
@@ -747,9 +616,7 @@ export default function HomePage() {
           </Link>
         </div>
         <a
-          href={contacts.email ? `https://mail.google.com/mail/?view=cm&fs=1&to=${contacts.email}` : '#'}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={contacts.email ? `mailto:${contacts.email}` : '#'}
           className="bg-electric-cyan text-on-primary-fixed font-mono text-label-mono px-6 py-2 rounded-full hover:scale-95 transition-transform active:scale-90"
         >
           Hire Me
@@ -817,9 +684,9 @@ export default function HomePage() {
                   <div className="mouse-glow"></div>
                   <div className="relative h-[300px] md:h-[380px] overflow-hidden z-10 bg-white/3 flex items-center justify-center">
                     {project.thumbnail ? (
-                      <img 
-                        src={project.thumbnail} 
-                        alt={project.name} 
+                      <img
+                        src={project.thumbnail}
+                        alt={project.name}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
                     ) : (
@@ -907,7 +774,7 @@ export default function HomePage() {
               </div>
               <div className="hidden sm:block w-px h-12 bg-white/10"></div>
               <div className="text-center">
-                <div className="text-4xl font-sora font-bold text-on-surface">10+</div>
+                <div className="text-4xl font-sora font-bold text-on-surface">3+</div>
                 <div className="font-mono text-[11px] text-on-surface-variant uppercase tracking-wider mt-1">Projects Built</div>
               </div>
               <div className="hidden sm:block w-px h-12 bg-white/10"></div>
@@ -1092,9 +959,7 @@ export default function HomePage() {
             )}
           </div>
           <a
-            href={contacts.email ? `https://mail.google.com/mail/?view=cm&fs=1&to=${contacts.email}` : '#'}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={contacts.email ? `mailto:${contacts.email}` : '#'}
             className="bg-electric-cyan/5 border border-electric-cyan/20 text-electric-cyan px-6 py-2 rounded-full font-mono text-label-mono hover:bg-electric-cyan/10 transition-all text-center"
           >
             Let's Collaborate
