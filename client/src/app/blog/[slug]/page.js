@@ -181,7 +181,9 @@ export default function BlogDetailPage({ params }) {
           </Link>
         </div>
         <a
-          href={contacts.email ? `mailto:${contacts.email}` : '#'}
+          href={contacts.email ? `https://mail.google.com/mail/?view=cm&fs=1&to=${contacts.email}` : '#'}
+          target="_blank"
+          rel="noopener noreferrer"
           className="bg-electric-cyan text-on-primary-fixed font-mono text-label-mono px-6 py-2 rounded-full hover:scale-95 transition-transform active:scale-90"
         >
           Hire Me
@@ -223,7 +225,9 @@ export default function BlogDetailPage({ params }) {
             <p className="font-sans text-body-md text-on-surface-variant">© 2026 Built with Precision</p>
           </div>
           <a
-            href={contacts.email ? `mailto:${contacts.email}` : '#'}
+            href={contacts.email ? `https://mail.google.com/mail/?view=cm&fs=1&to=${contacts.email}` : '#'}
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-electric-cyan/5 border border-electric-cyan/20 text-electric-cyan px-6 py-2 rounded-full font-mono text-label-mono hover:bg-electric-cyan/10 transition-all text-center"
           >
             Let's Collaborate

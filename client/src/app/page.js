@@ -222,6 +222,28 @@ export default function HomePage() {
       }
     ];
 
+    // Distant background planets with parallax scrolling
+    const backgroundPlanets = [
+      {
+        xPct: 0.15,
+        yPct: 0.75, // Bottom left
+        radius: 20,
+        color1: 'rgba(255, 0, 200, 0.15)',
+        color2: 'rgba(46, 0, 75, 0.08)',
+        glow: 'rgba(255, 0, 200, 0.1)',
+        parallaxFactor: 0.05
+      },
+      {
+        xPct: 0.85,
+        yPct: 0.15, // Top right
+        radius: 15,
+        color1: 'rgba(0, 255, 135, 0.12)',
+        color2: 'rgba(0, 59, 32, 0.06)',
+        glow: 'rgba(0, 255, 135, 0.08)',
+        parallaxFactor: 0.03
+      }
+    ];
+
     class Particle {
       constructor() {
         this.init();
@@ -230,30 +252,100 @@ export default function HomePage() {
       init() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 1.5 + 0.5;
-        this.speedX = (Math.random() - 0.5) * 0.3;
-        this.speedY = (Math.random() - 0.5) * 0.3;
-        this.opacity = Math.random() * 0.4 + 0.1;
+        this.size = Math.random() * 1.5 + 0.3;
+        this.speedX = (Math.random() - 0.5) * 0.15;
+        this.speedY = (Math.random() - 0.5) * 0.15;
+        this.baseOpacity = Math.random() * 0.4 + 0.1;
+        this.twinklePhase = Math.random() * Math.PI * 2;
+        this.twinkleSpeed = 0.005 + Math.random() * 0.015;
+        
+        const colors = [
+          'rgba(0, 240, 255,',   // Cyan
+          'rgba(255, 0, 200,',   // Magenta
+          'rgba(255, 255, 255,', // White
+          'rgba(197, 160, 89,'   // Gold
+        ];
+        this.colorPrefix = colors[Math.floor(Math.random() * colors.length)];
       }
 
       update() {
         this.x += this.speedX;
         this.y += this.speedY;
+        this.twinklePhase += this.twinkleSpeed;
 
         if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
         if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
       }
 
       draw() {
-        ctx.fillStyle = `rgba(0, 240, 255, ${this.opacity})`;
+        const opacity = this.baseOpacity + Math.sin(this.twinklePhase) * 0.25;
+        const finalOpacity = Math.min(Math.max(opacity, 0.05), 0.7);
+        
+        ctx.fillStyle = `${this.colorPrefix}${finalOpacity})`;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    for (let i = 0; i < 40; i++) {
+    class ShootingStar {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * canvas.width * 0.8 + canvas.width * 0.2;
+        this.y = Math.random() * canvas.height * 0.4;
+        this.len = Math.random() * 80 + 40;
+        this.speed = Math.random() * 10 + 8;
+        this.dx = -this.speed;
+        this.dy = this.speed * 0.6;
+        this.opacity = 1.0;
+        this.active = false;
+      }
+
+      trigger() {
+        this.active = true;
+      }
+
+      update() {
+        if (!this.active) return;
+        this.x += this.dx;
+        this.y += this.dy;
+        this.opacity -= 0.025;
+
+        if (this.opacity <= 0 || this.x < -100 || this.y > canvas.height + 100) {
+          this.reset();
+        }
+      }
+
+      draw() {
+        if (!this.active) return;
+        ctx.save();
+        
+        const grad = ctx.createLinearGradient(this.x, this.y, this.x - this.dx * 1.5, this.y - this.dy * 1.5);
+        grad.addColorStop(0, `rgba(0, 240, 255, ${this.opacity})`);
+        grad.addColorStop(0.3, `rgba(255, 0, 200, ${this.opacity * 0.5})`);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x - this.dx, this.y - this.dy);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    let shootingStars = [];
+
+    for (let i = 0; i < 85; i++) {
       particles.push(new Particle());
+    }
+
+    for (let i = 0; i < 2; i++) {
+      shootingStars.push(new ShootingStar());
     }
 
     const drawPlanetSystem = (time) => {
@@ -308,6 +400,34 @@ export default function HomePage() {
       
       const cx = (currentXPct * canvas.width) + mouseOffsetX;
       const cy = (currentYPct * canvas.height) + mouseOffsetY + floatOffset;
+
+      // Draw distant background planets
+      backgroundPlanets.forEach(bp => {
+        const parallaxY = -window.scrollY * bp.parallaxFactor;
+        const bpx = bp.xPct * canvas.width;
+        const bpy = (bp.yPct * canvas.height) + parallaxY + Math.sin(time * 0.005 + bp.xPct * 100) * 5;
+
+        // Draw glow
+        ctx.save();
+        const glowGrad = ctx.createRadialGradient(bpx, bpy, bp.radius - 2, bpx, bpy, bp.radius + 15);
+        glowGrad.addColorStop(0, bp.color1);
+        glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(bpx, bpy, bp.radius + 15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw planet core
+        const coreGrad = ctx.createRadialGradient(bpx - bp.radius * 0.2, bpy - bp.radius * 0.2, bp.radius * 0.1, bpx, bpy, bp.radius);
+        coreGrad.addColorStop(0, bp.color1);
+        coreGrad.addColorStop(0.5, bp.color2);
+        coreGrad.addColorStop(1, '#050505');
+        ctx.fillStyle = coreGrad;
+        ctx.beginPath();
+        ctx.arc(bpx, bpy, bp.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
 
       const drawOrbitRing = (rx, ry, tilt, color) => {
         ctx.save();
@@ -455,6 +575,17 @@ export default function HomePage() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       frameCount++;
       
+      // Update & Draw Shooting Stars
+      if (Math.random() < 0.003) {
+        const inactiveStar = shootingStars.find(s => !s.active);
+        if (inactiveStar) inactiveStar.trigger();
+      }
+      
+      shootingStars.forEach(s => {
+        s.update();
+        s.draw();
+      });
+
       particles.forEach(p => {
         p.update();
         p.draw();
@@ -616,7 +747,9 @@ export default function HomePage() {
           </Link>
         </div>
         <a
-          href={contacts.email ? `mailto:${contacts.email}` : '#'}
+          href={contacts.email ? `https://mail.google.com/mail/?view=cm&fs=1&to=${contacts.email}` : '#'}
+          target="_blank"
+          rel="noopener noreferrer"
           className="bg-electric-cyan text-on-primary-fixed font-mono text-label-mono px-6 py-2 rounded-full hover:scale-95 transition-transform active:scale-90"
         >
           Hire Me
@@ -959,7 +1092,9 @@ export default function HomePage() {
             )}
           </div>
           <a
-            href={contacts.email ? `mailto:${contacts.email}` : '#'}
+            href={contacts.email ? `https://mail.google.com/mail/?view=cm&fs=1&to=${contacts.email}` : '#'}
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-electric-cyan/5 border border-electric-cyan/20 text-electric-cyan px-6 py-2 rounded-full font-mono text-label-mono hover:bg-electric-cyan/10 transition-all text-center"
           >
             Let's Collaborate

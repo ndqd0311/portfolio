@@ -26,7 +26,7 @@ export default function AdminLayout({ children }) {
 
   const handleLogout = () => {
     removeToken();
-    router.push('/admin/login');
+    router.push('/');
   };
 
   if (!authChecked) {
