@@ -11,9 +11,9 @@ namespace API.Controllers;
 public class BlogsController : ApiControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<BlogDto>>> GetBlogs()
+    public async Task<ActionResult<List<BlogDto>>> GetBlogs([FromQuery] bool includeUnpublished = false)
     {
-        return await Mediator.Send(new GetBlogsQuery());
+        return await Mediator.Send(new GetBlogsQuery(includeUnpublished));
     }
 
     [HttpGet("{slug}")]

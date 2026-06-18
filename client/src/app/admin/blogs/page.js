@@ -23,7 +23,7 @@ export default function AdminBlogsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const blogsData = await fetchApi('/api/blogs');
+      const blogsData = await fetchApi('/api/blogs?includeUnpublished=true');
       // Sort blogs by newest first
       const sortedBlogs = blogsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setBlogs(sortedBlogs);
