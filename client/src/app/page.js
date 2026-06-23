@@ -610,7 +610,7 @@ export default function HomePage() {
       {/* TopNavBar */}
       <nav
         ref={navRef}
-        className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[1280px] rounded-full border border-white/10 z-50 bg-background/80 backdrop-blur-[20px] shadow-2xl flex justify-between items-center px-8 py-4 transition-all duration-500 ease-in-out"
+        className="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 w-[95%] sm:w-[90%] max-w-[1280px] rounded-full border border-white/10 z-50 bg-background/80 backdrop-blur-[20px] shadow-2xl flex justify-between items-center px-4 py-2.5 sm:px-8 sm:py-4 transition-all duration-500 ease-in-out"
         id="main-nav"
       >
         <Link
@@ -621,21 +621,21 @@ export default function HomePage() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           }}
-          className="font-mono text-body-lg font-bold tracking-tighter text-electric-cyan hover:opacity-85 transition-opacity"
+          className="font-mono text-base sm:text-body-lg font-bold tracking-tighter text-electric-cyan hover:opacity-85 transition-opacity"
         >
           QD
         </Link>
-        <div className="hidden md:flex items-center gap-8">
-          <Link href="/projects" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
+        <div className="flex items-center gap-2 sm:gap-4 md:gap-8 text-[11px] sm:text-xs md:text-body-md">
+          <Link href="/projects" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans">
             Projects
           </Link>
-          <Link href="/blog" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
+          <Link href="/blog" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans">
             Blog
           </Link>
-          <a href="#tech-mastery" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
+          <a href="#tech-mastery" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans">
             Skills
           </a>
-          <a href="#contact" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
+          <a href="#contact" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans">
             Contact
           </a>
           {user ? (
@@ -645,12 +645,12 @@ export default function HomePage() {
                 setUser(null);
                 window.location.reload();
               }}
-              className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md"
+              className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans whitespace-nowrap"
             >
               Logout ({user.username})
             </button>
           ) : (
-            <Link href="/admin/login" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
+            <Link href="/admin/login" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans">
               Login
             </Link>
           )}
@@ -659,7 +659,7 @@ export default function HomePage() {
           href={contacts.email ? `https://mail.google.com/mail/?view=cm&fs=1&to=${contacts.email}` : '#'}
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-electric-cyan text-on-primary-fixed font-mono text-label-mono px-6 py-2 rounded-full hover:scale-95 transition-transform active:scale-90"
+          className="bg-electric-cyan text-on-primary-fixed font-mono text-[10px] sm:text-label-mono px-3.5 py-1.5 sm:px-6 sm:py-2 rounded-full hover:scale-95 transition-transform active:scale-90 whitespace-nowrap"
         >
           Hire Me
         </a>
