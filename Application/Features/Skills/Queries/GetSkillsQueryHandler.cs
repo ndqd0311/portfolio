@@ -1,8 +1,4 @@
 using Application.Features.Common.DTOs;
-using Application.Features.Common.Interfaces;
-using AutoMapper;
-using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Skills.Queries;
 

@@ -11,6 +11,20 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isRegister, setIsRegister] = useState(false);
+
+  const decodeJwt = (token) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -18,6 +32,15 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
+      if (isRegister) {
+        // Step 1: Register User (role is forced to User/2 in backend)
+        await fetchApi('/api/auth/register', {
+          method: 'POST',
+          body: { username, password }
+        });
+      }
+
+      // Step 2: Log In
       const response = await fetchApi('/api/auth/login', {
         method: 'POST',
         body: { username, password }
@@ -26,12 +49,20 @@ export default function AdminLoginPage() {
       const token = response?.Token || response?.token;
       if (token) {
         setToken(token);
-        router.push('/admin/projects');
+        
+        // Step 3: Decode role and redirect
+        const decoded = decodeJwt(token);
+        const role = decoded?.role || decoded?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+        if (role === 'Admin') {
+          router.push('/admin/projects');
+        } else {
+          router.push('/');
+        }
       } else {
         throw new Error('Authentication token not received.');
       }
     } catch (err) {
-      setError(err.message || 'Login failed. Please verify credentials.');
+      setError(err.message || 'Authentication failed. Please verify credentials.');
     } finally {
       setLoading(false);
     }
@@ -49,12 +80,14 @@ export default function AdminLoginPage() {
             QD
           </Link>
           <p className="font-sans text-sm text-on-surface-variant mt-2">
-            Administrator Access Panel
+            {isRegister ? 'Access Registration Portal' : 'Administrator Access Panel'}
           </p>
         </div>
 
         <form onSubmit={handleLogin} className="glass-card p-8 md:p-10 rounded-2xl space-y-6">
-          <h2 className="font-sora text-xl font-semibold text-on-surface text-center">Secure Sign In</h2>
+          <h2 className="font-sora text-xl font-semibold text-on-surface text-center">
+            {isRegister ? 'Create Account' : 'Secure Sign In'}
+          </h2>
 
           <div className="flex flex-col space-y-2">
             <label className="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest" htmlFor="username">Username</label>
@@ -64,7 +97,7 @@ export default function AdminLoginPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              placeholder="admin"
+              placeholder="Username"
               className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-on-surface placeholder-white/20 focus:outline-none focus:border-electric-cyan transition-colors"
             />
           </div>
@@ -93,8 +126,21 @@ export default function AdminLoginPage() {
             disabled={loading}
             className="w-full bg-electric-cyan text-on-primary-fixed py-4 rounded-full font-mono text-label-mono hover:scale-[0.98] active:scale-95 transition-transform disabled:opacity-50"
           >
-            {loading ? 'Authenticating...' : 'Sign In'}
+            {loading ? 'Processing...' : (isRegister ? 'Sign Up & Login' : 'Sign In')}
           </button>
+
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegister(!isRegister);
+                setError(null);
+              }}
+              className="font-mono text-xs text-electric-cyan hover:underline"
+            >
+              {isRegister ? 'Already have an account? Sign In' : "Don't have an account? Register as User"}
+            </button>
+          </div>
         </form>
 
         <div className="text-center mt-6">

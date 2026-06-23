@@ -2,12 +2,39 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { fetchApi } from '@/utils/api';
+import { fetchApi, getToken } from '@/utils/api';
+
+const decodeJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+};
 
 export default function BlogsPage() {
   const [blogs, setBlogs] = useState([]);
   const [contacts, setContacts] = useState({ email: '' });
+  const [user, setUser] = useState(null);
   const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const token = getToken();
+    if (token) {
+      const decoded = decodeJwt(token);
+      if (decoded) {
+        setUser({
+          username: decoded.unique_name || decoded.name || decoded.sub || 'User',
+          role: decoded.role || decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+        });
+      }
+    }
+  }, []);
 
   // Canvas background planet effect
   useEffect(() => {
@@ -404,9 +431,22 @@ export default function BlogsPage() {
           <Link href="/#contact" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
             Contact
           </Link>
-          <Link href="/admin/login" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
-            Admin
-          </Link>
+          {user ? (
+            <button
+              onClick={() => {
+                localStorage.removeItem('portfolio_auth_token');
+                setUser(null);
+                window.location.reload();
+              }}
+              className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md"
+            >
+              Logout ({user.username})
+            </button>
+          ) : (
+            <Link href="/admin/login" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
+              Login
+            </Link>
+          )}
         </div>
         <a
           href={contacts.email ? `https://mail.google.com/mail/?view=cm&fs=1&to=${contacts.email}` : '#'}

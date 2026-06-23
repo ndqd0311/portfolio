@@ -1,7 +1,3 @@
-using Application.Features.Common.Interfaces;
-using MediatR;
-using Microsoft.EntityFrameworkCore;
-
 namespace Application.Features.Skills.Commands;
 
 public class DeleteSkillCommandHandler(IApplicationDbContext context) : IRequestHandler<DeleteSkillCommand, bool>

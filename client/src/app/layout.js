@@ -1,5 +1,6 @@
 import { Sora, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import DragonCursor from "./components/DragonCursor";
 
 const sora = Sora({
   subsets: ["latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="min-h-full bg-background text-on-surface font-sans overflow-x-hidden flex flex-col" suppressHydrationWarning>
+        <DragonCursor />
         {children}
       </body>
     </html>

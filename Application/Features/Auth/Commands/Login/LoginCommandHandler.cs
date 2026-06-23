@@ -34,7 +34,7 @@ public class LoginCommandHandler(IApplicationDbContext context, IConfiguration c
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, "Admin")
+                new Claim(ClaimTypes.Role, user.RoleId == 2 ? "User" : "Admin")
             }),
             Expires = DateTime.UtcNow.AddMinutes(expiryInMinutes),
             Issuer = issuer,

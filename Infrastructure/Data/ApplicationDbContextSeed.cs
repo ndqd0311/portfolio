@@ -14,13 +14,33 @@ public static class ApplicationDbContextSeed
         // Ensure github_url column exists dynamically since we use EnsureCreated() without Migrations
         await context.Database.ExecuteSqlRawAsync("ALTER TABLE contacts ADD COLUMN IF NOT EXISTS github_url VARCHAR(255) NOT NULL DEFAULT '';");
 
+        // Ensure blog_comments and blog_likes tables exist dynamically
+        await context.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS blog_comments (
+                id SERIAL PRIMARY KEY,
+                blog_id INT NOT NULL,
+                user_id INT NOT NULL,
+                content TEXT NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+        ");
+
+        await context.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS blog_likes (
+                id SERIAL PRIMARY KEY,
+                blog_id INT NOT NULL,
+                user_id INT NOT NULL
+            );
+        ");
+
         // 1. Seed Users (Admin)
         if (!await context.Users.AnyAsync())
         {
             var adminUser = new Users
             {
                 Username = "admin",
-                Password = BCrypt.Net.BCrypt.HashPassword("admin123")
+                Password = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                RoleId = 1
             };
             await context.Users.AddAsync(adminUser);
         }

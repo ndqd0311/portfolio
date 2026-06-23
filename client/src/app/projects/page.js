@@ -2,14 +2,41 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { fetchApi } from '@/utils/api';
+import { fetchApi, getToken } from '@/utils/api';
+
+const decodeJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+};
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState([]);
   const [skills, setSkills] = useState([]);
   const [selectedSkill, setSelectedSkill] = useState('All');
   const [contacts, setContacts] = useState({ email: '' });
+  const [user, setUser] = useState(null);
   const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const token = getToken();
+    if (token) {
+      const decoded = decodeJwt(token);
+      if (decoded) {
+        setUser({
+          username: decoded.unique_name || decoded.name || decoded.sub || 'User',
+          role: decoded.role || decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+        });
+      }
+    }
+  }, []);
 
   // Canvas background planet effect
   useEffect(() => {
@@ -51,7 +78,7 @@ export default function ProjectsPage() {
         this.baseOpacity = Math.random() * 0.4 + 0.1;
         this.twinklePhase = Math.random() * Math.PI * 2;
         this.twinkleSpeed = 0.005 + Math.random() * 0.015;
-        
+
         const colors = [
           'rgba(0, 240, 255,',
           'rgba(255, 0, 200,',
@@ -166,7 +193,7 @@ export default function ProjectsPage() {
         const parallaxY = -window.scrollY * bp.parallaxFactor;
         const bpx = bp.xPct * canvas.width;
         const bpy = (bp.yPct * canvas.height) + parallaxY + Math.sin(time * 0.005 + bp.xPct * 100) * 5;
-        
+
         ctx.save();
         const glowGrad = ctx.createRadialGradient(bpx, bpy, bp.radius - 2, bpx, bpy, bp.radius + 15);
         glowGrad.addColorStop(0, bp.color1);
@@ -175,7 +202,7 @@ export default function ProjectsPage() {
         ctx.beginPath();
         ctx.arc(bpx, bpy, bp.radius + 15, 0, Math.PI * 2);
         ctx.fill();
-        
+
         const coreGrad = ctx.createRadialGradient(bpx - bp.radius * 0.2, bpy - bp.radius * 0.2, bp.radius * 0.1, bpx, bpy, bp.radius);
         coreGrad.addColorStop(0, bp.color1);
         coreGrad.addColorStop(0.5, bp.color2);
@@ -230,8 +257,8 @@ export default function ProjectsPage() {
         if (m.isBehind) {
           ctx.save();
           ctx.beginPath();
-          ctx.arc(m.x, m.y, m.size * ((m.depth + 1)/2 * 0.6 + 0.6), 0, Math.PI * 2);
-          ctx.fillStyle = m.color.replace(/[\d.]+\)/, `${(m.depth + 1)/2 * 0.7 + 0.3})`);
+          ctx.arc(m.x, m.y, m.size * ((m.depth + 1) / 2 * 0.6 + 0.6), 0, Math.PI * 2);
+          ctx.fillStyle = m.color.replace(/[\d.]+\)/, `${(m.depth + 1) / 2 * 0.7 + 0.3})`);
           ctx.shadowBlur = 12;
           ctx.shadowColor = m.glow;
           ctx.fill();
@@ -284,8 +311,8 @@ export default function ProjectsPage() {
         if (!m.isBehind) {
           ctx.save();
           ctx.beginPath();
-          ctx.arc(m.x, m.y, m.size * ((m.depth + 1)/2 * 0.6 + 0.6), 0, Math.PI * 2);
-          ctx.fillStyle = m.color.replace(/[\d.]+\)/, `${(m.depth + 1)/2 * 0.7 + 0.3})`);
+          ctx.arc(m.x, m.y, m.size * ((m.depth + 1) / 2 * 0.6 + 0.6), 0, Math.PI * 2);
+          ctx.fillStyle = m.color.replace(/[\d.]+\)/, `${(m.depth + 1) / 2 * 0.7 + 0.3})`);
           ctx.shadowBlur = 12;
           ctx.shadowColor = m.glow;
           ctx.fill();
@@ -435,9 +462,22 @@ export default function ProjectsPage() {
           <Link href="/#contact" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
             Contact
           </Link>
-          <Link href="/admin/login" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
-            Admin
-          </Link>
+          {user ? (
+            <button
+              onClick={() => {
+                localStorage.removeItem('portfolio_auth_token');
+                setUser(null);
+                window.location.reload();
+              }}
+              className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md"
+            >
+              Logout ({user.username})
+            </button>
+          ) : (
+            <Link href="/admin/login" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
+              Login
+            </Link>
+          )}
         </div>
         <a
           href={contacts.email ? `https://mail.google.com/mail/?view=cm&fs=1&to=${contacts.email}` : '#'}
@@ -464,8 +504,8 @@ export default function ProjectsPage() {
             <button
               onClick={() => setSelectedSkill('All')}
               className={`px-5 py-2 rounded-full font-mono text-xs uppercase transition-all duration-300 ${selectedSkill === 'All'
-                  ? 'bg-electric-cyan text-on-primary-fixed font-semibold scale-105'
-                  : 'bg-white/5 border border-white/5 text-on-surface-variant hover:text-electric-cyan'
+                ? 'bg-electric-cyan text-on-primary-fixed font-semibold scale-105'
+                : 'bg-white/5 border border-white/5 text-on-surface-variant hover:text-electric-cyan'
                 }`}
             >
               All
@@ -475,8 +515,8 @@ export default function ProjectsPage() {
                 key={skill.id}
                 onClick={() => setSelectedSkill(skill.name)}
                 className={`px-5 py-2 rounded-full font-mono text-xs uppercase transition-all duration-300 ${selectedSkill === skill.name
-                    ? 'bg-electric-cyan text-on-primary-fixed font-semibold scale-105'
-                    : 'bg-white/5 border border-white/5 text-on-surface-variant hover:text-electric-cyan'
+                  ? 'bg-electric-cyan text-on-primary-fixed font-semibold scale-105'
+                  : 'bg-white/5 border border-white/5 text-on-surface-variant hover:text-electric-cyan'
                   }`}
               >
                 {skill.name}
@@ -498,9 +538,9 @@ export default function ProjectsPage() {
                   <div className="mouse-glow"></div>
                   <div className="relative h-[250px] md:h-[320px] overflow-hidden z-10 bg-white/3 flex items-center justify-center">
                     {project.thumbnail ? (
-                      <img 
-                        src={project.thumbnail} 
-                        alt={project.name} 
+                      <img
+                        src={project.thumbnail}
+                        alt={project.name}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
                     ) : (

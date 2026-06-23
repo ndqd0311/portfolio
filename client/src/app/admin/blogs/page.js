@@ -20,6 +20,42 @@ export default function AdminBlogsPage() {
   const [formError, setFormError] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
+  // Comments Management modal states
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [commentsBlog, setCommentsBlog] = useState(null);
+  const [blogComments, setBlogComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+
+  const handleOpenCommentsModal = async (blog) => {
+    setCommentsBlog(blog);
+    setShowCommentsModal(true);
+    setBlogComments([]);
+    setLoadingComments(true);
+    try {
+      const data = await fetchApi(`/api/blogs/${blog.slug}/comments`);
+      setBlogComments(data || []);
+    } catch (err) {
+      console.error('Error loading comments:', err);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!confirm('Are you sure you want to delete this comment?')) return;
+    try {
+      await fetchApi(`/api/blogs/comments/${commentId}`, {
+        method: 'DELETE'
+      });
+      if (commentsBlog) {
+        const data = await fetchApi(`/api/blogs/${commentsBlog.slug}/comments`);
+        setBlogComments(data || []);
+      }
+    } catch (err) {
+      alert(`Failed to delete comment: ${err.message}`);
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -153,6 +189,13 @@ export default function AdminBlogsPage() {
               <div className="flex md:flex-col justify-between items-end shrink-0 gap-4 md:border-l md:border-white/5 md:pl-6">
                 <div className="flex gap-2">
                   <button 
+                    onClick={() => handleOpenCommentsModal(blog)}
+                    className="flex items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-electric-cyan/10 hover:text-electric-cyan transition-colors"
+                    title="Manage Comments"
+                  >
+                    <span className="material-symbols-outlined text-sm">forum</span>
+                  </button>
+                  <button 
                     onClick={() => handleOpenEditModal(blog)}
                     className="flex items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-electric-cyan/10 hover:text-electric-cyan transition-colors"
                     title="Edit Post"
@@ -271,6 +314,74 @@ export default function AdminBlogsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Comments Management Modal */}
+      {showCommentsModal && commentsBlog && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex justify-center items-center z-50 p-4">
+          <div className="glass-card w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
+            {/* Modal Header */}
+            <div className="flex justify-between items-center border-b border-white/5 px-8 py-5 shrink-0">
+              <div>
+                <h2 className="font-sora text-lg font-bold text-on-surface uppercase tracking-wide">
+                  Manage Comments
+                </h2>
+                <p className="text-xs text-on-surface-variant line-clamp-1 mt-1">{commentsBlog.name}</p>
+              </div>
+              <button onClick={() => setShowCommentsModal(false)} className="text-on-surface-variant hover:text-electric-cyan">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto px-8 py-6">
+              {loadingComments ? (
+                <div className="flex flex-col justify-center items-center py-12 text-on-surface-variant font-mono text-xs">
+                  <span className="material-symbols-outlined text-electric-cyan animate-spin mb-2">sync</span>
+                  <span>Loading comments...</span>
+                </div>
+              ) : blogComments.length > 0 ? (
+                <div className="space-y-4">
+                  {blogComments.map(comment => (
+                    <div key={comment.id} className="flex justify-between items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-electric-cyan">{comment.username}</span>
+                          <span className="text-[10px] text-on-surface-variant">
+                            {new Date(comment.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-on-surface font-sans leading-relaxed">{comment.content}</p>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteComment(comment.id)}
+                        className="flex items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-error/10 hover:text-error transition-colors shrink-0"
+                        title="Delete Comment"
+                      >
+                        <span className="material-symbols-outlined text-sm">delete</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-on-surface-variant text-sm font-sans">
+                  No comments yet on this article.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end border-t border-white/5 px-8 py-5 shrink-0">
+              <button 
+                type="button"
+                onClick={() => setShowCommentsModal(false)}
+                className="px-6 py-3 rounded-full border border-white/10 font-mono text-xs uppercase text-on-surface-variant hover:bg-white/5"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

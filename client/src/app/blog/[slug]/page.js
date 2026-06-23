@@ -2,7 +2,8 @@
 
 import { useState, useEffect, use, useRef } from 'react';
 import Link from 'next/link';
-import { fetchApi } from '@/utils/api';
+import { useRouter } from 'next/navigation';
+import { fetchApi, getToken, isAuthenticated } from '@/utils/api';
 
 // Simple self-contained markdown parser for style compliance without extra npm installations
 function renderMarkdown(md = '') {
@@ -104,13 +105,47 @@ function parseInline(text) {
   return parts.length > 0 ? parts : text;
 }
 
+const decodeJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+};
+
 export default function BlogDetailPage({ params }) {
+  const router = useRouter();
   const unwrappedParams = use(params);
   const slug = unwrappedParams.slug;
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [contacts, setContacts] = useState({ email: '' });
+  const [comments, setComments] = useState([]);
+  const [likesInfo, setLikesInfo] = useState({ likesCount: 0, hasLiked: false });
+  const [newComment, setNewComment] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+  const [user, setUser] = useState(null);
   const canvasRef = useRef(null);
+
+  // Parse JWT token to check user role/identity on load
+  useEffect(() => {
+    const token = getToken();
+    if (token) {
+      const decoded = decodeJwt(token);
+      if (decoded) {
+        setUser({
+          username: decoded.unique_name || decoded.name || decoded.sub || 'User',
+          role: decoded.role || decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+        });
+      }
+    }
+  }, []);
 
   // Canvas background planet effect
   useEffect(() => {
@@ -423,16 +458,37 @@ export default function BlogDetailPage({ params }) {
     };
   }, []);
 
+  const loadBlogData = async () => {
+    try {
+      const blogData = await fetchApi(`/api/blogs/${slug}`);
+      setBlog(blogData);
+    } catch (err) {
+      console.error('Error fetching blog details:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCommentsAndLikes = async () => {
+    try {
+      const commentsData = await fetchApi(`/api/blogs/${slug}/comments`);
+      setComments(commentsData || []);
+    } catch (err) {
+      console.error('Error fetching comments:', err);
+    }
+
+    try {
+      const likesData = await fetchApi(`/api/blogs/${slug}/likes`);
+      setLikesInfo(likesData || { likesCount: 0, hasLiked: false });
+    } catch (err) {
+      console.error('Error fetching likes:', err);
+    }
+  };
+
   useEffect(() => {
     async function loadData() {
-      try {
-        const blogData = await fetchApi(`/api/blogs/${slug}`);
-        setBlog(blogData);
-      } catch (err) {
-        console.error('Error fetching blog details:', err);
-      } finally {
-        setLoading(false);
-      }
+      await loadBlogData();
+      await loadCommentsAndLikes();
 
       try {
         const contactsData = await fetchApi('/api/contacts');
@@ -444,8 +500,57 @@ export default function BlogDetailPage({ params }) {
       }
     }
 
-    loadData();
+    if (slug) {
+      loadData();
+    }
   }, [slug]);
+
+  const handleLikeToggle = async () => {
+    if (!isAuthenticated()) {
+      router.push('/admin/login');
+      return;
+    }
+
+    setIsLiking(true);
+    try {
+      const isLiked = await fetchApi(`/api/blogs/${slug}/likes/toggle`, {
+        method: 'POST'
+      });
+      setLikesInfo((prev) => ({
+        likesCount: isLiked ? prev.likesCount + 1 : Math.max(0, prev.likesCount - 1),
+        hasLiked: isLiked
+      }));
+    } catch (err) {
+      console.error('Error toggling like:', err);
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    if (!isAuthenticated()) {
+      router.push('/admin/login');
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    try {
+      await fetchApi(`/api/blogs/${slug}/comments`, {
+        method: 'POST',
+        body: { content: newComment }
+      });
+      setNewComment('');
+      // Reload comments list
+      const commentsData = await fetchApi(`/api/blogs/${slug}/comments`);
+      setComments(commentsData || []);
+    } catch (err) {
+      console.error('Error posting comment:', err);
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -493,9 +598,22 @@ export default function BlogDetailPage({ params }) {
           <Link href="/#contact" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
             Contact
           </Link>
-          <Link href="/admin/login" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
-            Admin
-          </Link>
+          {user ? (
+            <button
+              onClick={() => {
+                localStorage.removeItem('portfolio_auth_token');
+                setUser(null);
+                window.location.reload();
+              }}
+              className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md"
+            >
+              Logout ({user.username})
+            </button>
+          ) : (
+            <Link href="/admin/login" className="text-on-surface-variant font-medium hover:text-electric-cyan transition-colors duration-300 font-sans text-body-md">
+              Login
+            </Link>
+          )}
         </div>
         <a
           href={contacts.email ? `https://mail.google.com/mail/?view=cm&fs=1&to=${contacts.email}` : '#'}
@@ -530,6 +648,110 @@ export default function BlogDetailPage({ params }) {
           {/* Render parsed markdown content */}
           <div className="py-6 text-on-surface-variant font-sans text-body-md leading-relaxed prose prose-invert max-w-none">
             {renderMarkdown(blog.content)}
+          </div>
+
+          {/* Likes and Interaction Bar */}
+          <div className="py-6 border-y border-white/5 flex items-center justify-between">
+            <button
+              onClick={handleLikeToggle}
+              disabled={isLiking}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full border transition-all duration-300 font-mono text-xs ${
+                likesInfo.hasLiked
+                  ? 'bg-electric-cyan/10 border-electric-cyan text-electric-cyan shadow-[0_0_15px_rgba(0,240,255,0.15)]'
+                  : 'bg-white/5 border-white/5 text-on-surface-variant hover:text-electric-cyan hover:border-electric-cyan/20'
+              }`}
+            >
+              <span className="material-symbols-outlined text-sm">
+                {likesInfo.hasLiked ? 'favorite' : 'favorite_border'}
+              </span>
+              <span>{likesInfo.likesCount} {likesInfo.likesCount === 1 ? 'Like' : 'Likes'}</span>
+            </button>
+            
+            <div className="font-mono text-xs text-on-surface-variant">
+              {comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}
+            </div>
+          </div>
+
+          {/* Comments Section */}
+          <div className="space-y-8 pt-6">
+            <h3 className="font-sora text-xl font-bold text-on-surface">Discussion</h3>
+
+            {/* Comment Form */}
+            {user ? (
+              <form onSubmit={handleCommentSubmit} className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-electric-cyan/15 flex items-center justify-center font-mono text-xs text-electric-cyan border border-electric-cyan/25 uppercase font-bold">
+                    {user.username[0]}
+                  </div>
+                  <span className="font-mono text-xs text-on-surface font-semibold">{user.username}</span>
+                </div>
+                <div className="relative">
+                  <textarea
+                    rows="3"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    required
+                    placeholder="Share your thoughts on this architecture..."
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-on-surface placeholder-white/20 focus:outline-none focus:border-electric-cyan transition-colors resize-none text-body-md font-sans"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isSubmittingComment || !newComment.trim()}
+                  className="bg-electric-cyan text-on-primary-fixed px-6 py-2.5 rounded-full font-mono text-xs font-semibold hover:scale-95 transition-transform disabled:opacity-50"
+                >
+                  {isSubmittingComment ? 'Posting...' : 'Post Comment'}
+                </button>
+              </form>
+            ) : (
+              <div className="glass-card p-6 rounded-xl border border-white/5 text-center space-y-3">
+                <p className="font-sans text-body-md text-on-surface-variant">
+                  Join the discussion. Please sign in to write comments or like this article.
+                </p>
+                <Link
+                  href="/admin/login"
+                  className="inline-block bg-electric-cyan/10 border border-electric-cyan/20 text-electric-cyan px-6 py-2 rounded-full font-mono text-xs font-semibold hover:bg-electric-cyan/20 transition-all"
+                >
+                  Sign In
+                </Link>
+              </div>
+            )}
+
+            {/* Comments List */}
+            <div className="space-y-6">
+              {comments.length > 0 ? (
+                comments.map((comment) => (
+                  <div key={comment.id || comment.Id} className="glass-card p-6 rounded-2xl border border-white/5 space-y-3 relative">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center font-mono text-[11px] text-on-surface-variant uppercase font-bold">
+                          {comment.username ? comment.username[0] : (comment.Username ? comment.Username[0] : '?')}
+                        </div>
+                        <span className="font-sans text-body-md text-on-surface font-semibold">
+                          {comment.username || comment.Username || 'Anonymous'}
+                        </span>
+                      </div>
+                      <time className="font-mono text-[10px] text-on-surface-variant">
+                        {new Date(comment.createdAt || comment.CreatedAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </time>
+                    </div>
+                    <p className="font-sans text-body-md text-on-surface-variant whitespace-pre-wrap pl-10 leading-relaxed">
+                      {comment.content || comment.Content}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-on-surface-variant/40 py-8 font-mono text-xs">
+                  No comments yet. Start the conversation!
+                </div>
+              )}
+            </div>
           </div>
         </article>
       </main>

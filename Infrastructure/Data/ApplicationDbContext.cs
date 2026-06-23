@@ -19,6 +19,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Blogs> Blogs => Set<Blogs>();
     public DbSet<Contacts> Contacts => Set<Contacts>();
     public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
+    public DbSet<BlogComments> BlogComments => Set<BlogComments>();
+    public DbSet<BlogLikes> BlogLikes => Set<BlogLikes>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

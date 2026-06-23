@@ -1,6 +1,3 @@
-using Application.Features.Common.Interfaces;
-using MediatR;
-
 namespace Application.Features.Skills.Commands;
 
 public class CreateSkillCommandHandler(IApplicationDbContext context) : IRequestHandler<CreateSkillCommand, int>
@@ -13,10 +10,9 @@ public class CreateSkillCommandHandler(IApplicationDbContext context) : IRequest
             Category = request.Category,
             Proficiency = request.Proficiency
         };
-
+        
         context.Skills.Add(skill);
         await context.SaveChangesAsync(cancellationToken);
-
         return skill.Id;
     }
 }
