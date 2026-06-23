@@ -1,1 +1,21 @@
+# dotnet ignores
+**/bin/
+**/obj/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# next/node ignores
+**/node_modules/
+**/.next/
+**/out/
+
+# IDE ignores
+.vs/
+.idea/
+.vscode/
+
+# Local configuration
 appsettings.Development.json
+.env*

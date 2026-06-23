@@ -21,11 +21,18 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata = {
-  title: "Backend Developer Intern Portfolio",
-  description: "Aspiring Backend Developer Intern specializing in C#, .NET Core, Clean Architecture, and building robust databases and APIs.",
-  keywords: "backend, developer, intern, dotnet, csharp, clean-architecture, postgresql, nextjs, tailwindcss, react, glassmorphism",
+  title: "Nguyễn Đình Quang Dũng - Portfolio",
+  description: "Portfolio cá nhân và Blog chia sẻ kiến thức",
+  manifest: "/manifest.json", // Liên kết tới file manifest
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "QD Portfolio",
+  },
 };
-
+export const viewport = {
+  themeColor: "#3b82f6", // Màu sắc của thanh điều hướng trình duyệt di động
+};
 export default function RootLayout({ children }) {
   return (
     <html
