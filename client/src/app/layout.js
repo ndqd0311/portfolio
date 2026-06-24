@@ -1,7 +1,7 @@
 import { Sora, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import DragonCursor from "./components/DragonCursor";
-import Script from "next/script";
+import Script from 'next/script';
 
 const sora = Sora({
   subsets: ["latin"],
@@ -23,8 +23,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata = {
   title: "Nguyễn Đình Quang Dũng - Portfolio",
-  description: "Portfolio cá nhân và Blog chia sẻ kiến thức",
-  manifest: "/manifest.json", // Liên kết tới file manifest
+  description: "Portfolio cá nhân và Blog +
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -32,7 +31,7 @@ export const metadata = {
   },
 };
 export const viewport = {
-  themeColor: "#3b82f6", // Màu sắc của thanh điều hướng trình duyệt di động
+  themeColor: "#3b82f6",
 };
 export default function RootLayout({ children }) {
   return (
@@ -48,13 +47,11 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="min-h-full bg-background text-on-surface font-sans overflow-x-hidden flex flex-col" suppressHydrationWarning>
-        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
-          <Script
-            src={process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL || "https://cloud.umami.is/script.js"}
-            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
-            strategy="afterInteractive"
-          />
-        )}
+        <Script
+          src="https://cloud.umami.is/script.js"
+          data-website-id="958f044a-8979-4d07-a36e-4dc0e27d6142"
+          strategy="afterInteractive"
+        />
         <DragonCursor />
         {children}
       </body>
