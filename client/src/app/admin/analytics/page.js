@@ -511,103 +511,118 @@ export default function AdminAnalyticsPage() {
           )}
 
           {/* ── Dashboard ───────────────────────────────────────────── */}
-          {gaData && s && !gaError && (
-            <>
-              {/* KPI row 1 */}
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                <KpiCard icon="person" label="Unique Users" value={fmt(s.totalUsers)}
-                  colorClass="hover:border-electric-cyan/30" iconBgClass="bg-electric-cyan/10 text-electric-cyan" loading={gaLoading} />
-                <KpiCard icon="pageview" label="Pageviews" value={fmt(s.pageviews)}
-                  colorClass="hover:border-indigo-400/30" iconBgClass="bg-indigo-500/10 text-indigo-400" loading={gaLoading} />
-                <KpiCard icon="timeline" label="Sessions" value={fmt(s.sessions)}
-                  colorClass="hover:border-emerald-400/30" iconBgClass="bg-emerald-500/10 text-emerald-400" loading={gaLoading} />
-                <KpiCard icon="timer" label="Avg. Session Duration" value={fmtTime(s.avgSessionDuration)}
-                  colorClass="hover:border-amber-400/30" iconBgClass="bg-amber-500/10 text-amber-400" loading={gaLoading} />
-                <KpiCard icon="show_chart" label="Bounce Rate" value={fmtPct(s.bounceRate)}
-                  colorClass="hover:border-pink-400/30" iconBgClass="bg-pink-500/10 text-pink-400" loading={gaLoading} />
-                <KpiCard icon="person_add" label="New Users" value={fmt(s.newUsers)}
-                  sub={`${s.totalUsers > 0 ? Math.round((s.newUsers / s.totalUsers) * 100) : 0}% of total`}
-                  colorClass="hover:border-purple-400/30" iconBgClass="bg-purple-500/10 text-purple-400" loading={gaLoading} />
-              </div>
+          {gaData && !gaError && (
+            s ? (
+              <>
+                {/* KPI row 1 */}
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                  <KpiCard icon="person" label="Unique Users" value={fmt(s.totalUsers)}
+                    colorClass="hover:border-electric-cyan/30" iconBgClass="bg-electric-cyan/10 text-electric-cyan" loading={gaLoading} />
+                  <KpiCard icon="pageview" label="Pageviews" value={fmt(s.pageviews)}
+                    colorClass="hover:border-indigo-400/30" iconBgClass="bg-indigo-500/10 text-indigo-400" loading={gaLoading} />
+                  <KpiCard icon="timeline" label="Sessions" value={fmt(s.sessions)}
+                    colorClass="hover:border-emerald-400/30" iconBgClass="bg-emerald-500/10 text-emerald-400" loading={gaLoading} />
+                  <KpiCard icon="timer" label="Avg. Session Duration" value={fmtTime(s.avgSessionDuration)}
+                    colorClass="hover:border-amber-400/30" iconBgClass="bg-amber-500/10 text-amber-400" loading={gaLoading} />
+                  <KpiCard icon="show_chart" label="Bounce Rate" value={fmtPct(s.bounceRate)}
+                    colorClass="hover:border-pink-400/30" iconBgClass="bg-pink-500/10 text-pink-400" loading={gaLoading} />
+                  <KpiCard icon="person_add" label="New Users" value={fmt(s.newUsers)}
+                    sub={`${s.totalUsers > 0 ? Math.round((s.newUsers / s.totalUsers) * 100) : 0}% of total`}
+                    colorClass="hover:border-purple-400/30" iconBgClass="bg-purple-500/10 text-purple-400" loading={gaLoading} />
+                </div>
 
-              {/* Pageviews vs Sessions chart */}
-              {gaData.pageviewsOverTime?.length > 0 && (
-                <div className="glass-card rounded-2xl border border-white/5 p-6 bg-surface-dark/30 space-y-4">
-                  <div className="flex items-center justify-between flex-wrap gap-3">
-                    <div>
-                      <h3 className="font-sora text-base font-bold text-on-surface">Traffic Over Time</h3>
-                      <p className="font-sans text-xs text-on-surface-variant">
-                        Last {trafficDays} days — pageviews &amp; sessions per day
-                      </p>
+                {/* Pageviews vs Sessions chart */}
+                {gaData.pageviewsOverTime?.length > 0 && (
+                  <div className="glass-card rounded-2xl border border-white/5 p-6 bg-surface-dark/30 space-y-4">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                      <div>
+                        <h3 className="font-sora text-base font-bold text-on-surface">Traffic Over Time</h3>
+                        <p className="font-sans text-xs text-on-surface-variant">
+                          Last {trafficDays} days — pageviews &amp; sessions per day
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs font-mono">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-4 h-0.5 bg-electric-cyan rounded inline-block" />
+                          <span className="text-on-surface-variant">Pageviews</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-4 h-0.5 bg-indigo-400 rounded inline-block" style={{ borderTop: '2px dashed' }} />
+                          <span className="text-on-surface-variant">Sessions</span>
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-xs font-mono">
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-4 h-0.5 bg-electric-cyan rounded inline-block" />
-                        <span className="text-on-surface-variant">Pageviews</span>
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-4 h-0.5 bg-indigo-400 rounded inline-block" style={{ borderTop: '2px dashed' }} />
-                        <span className="text-on-surface-variant">Sessions</span>
-                      </span>
+
+                    <DualLineChart data={gaData.pageviewsOverTime} height={110} />
+
+                    {/* Date labels */}
+                    <div className="flex justify-between font-mono text-[10px] text-on-surface-variant/50 px-1">
+                      {[0, Math.floor((gaData.pageviewsOverTime.length - 1) / 2), gaData.pageviewsOverTime.length - 1].map((i) => {
+                        const d = gaData.pageviewsOverTime[i];
+                        return d ? <span key={i}>{fmtDateShort(d.t)}</span> : null;
+                      })}
                     </div>
                   </div>
+                )}
 
-                  <DualLineChart data={gaData.pageviewsOverTime} height={110} />
-
-                  {/* Date labels */}
-                  <div className="flex justify-between font-mono text-[10px] text-on-surface-variant/50 px-1">
-                    {[0, Math.floor((gaData.pageviewsOverTime.length - 1) / 2), gaData.pageviewsOverTime.length - 1].map((i) => {
-                      const d = gaData.pageviewsOverTime[i];
-                      return d ? <span key={i}>{fmtDateShort(d.t)}</span> : null;
-                    })}
+                {/* Breakdown grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="glass-card rounded-2xl border border-white/5 p-6 bg-surface-dark/30 space-y-5">
+                    <div><h3 className="font-sora text-sm font-bold text-on-surface">Top Pages</h3><p className="font-sans text-xs text-on-surface-variant">Most visited URLs</p></div>
+                    <BarList items={gaData.topPages} colorClass="bg-electric-cyan" />
                   </div>
-                </div>
-              )}
-
-              {/* Breakdown grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="glass-card rounded-2xl border border-white/5 p-6 bg-surface-dark/30 space-y-5">
-                  <div><h3 className="font-sora text-sm font-bold text-on-surface">Top Pages</h3><p className="font-sans text-xs text-on-surface-variant">Most visited URLs</p></div>
-                  <BarList items={gaData.topPages} colorClass="bg-electric-cyan" />
-                </div>
-                <div className="glass-card rounded-2xl border border-white/5 p-6 bg-surface-dark/30 space-y-5">
-                  <div><h3 className="font-sora text-sm font-bold text-on-surface">Traffic Sources</h3><p className="font-sans text-xs text-on-surface-variant">Where your visitors come from</p></div>
-                  <BarList items={gaData.sources} colorClass="bg-indigo-500" />
-                </div>
-                <div className="glass-card rounded-2xl border border-white/5 p-6 bg-surface-dark/30 space-y-5">
-                  <div><h3 className="font-sora text-sm font-bold text-on-surface">Browsers</h3><p className="font-sans text-xs text-on-surface-variant">Browser distribution</p></div>
-                  <BarList items={gaData.browsers} colorClass="bg-emerald-500" />
-                </div>
-                <div className="glass-card rounded-2xl border border-white/5 p-6 bg-surface-dark/30 space-y-5">
-                  <div><h3 className="font-sora text-sm font-bold text-on-surface">Devices</h3><p className="font-sans text-xs text-on-surface-variant">Desktop / Mobile / Tablet</p></div>
-                  <BarList items={gaData.devices} colorClass="bg-pink-500" />
-                </div>
-                <div className="glass-card rounded-2xl border border-white/5 p-6 bg-surface-dark/30 space-y-5 lg:col-span-2">
-                  <div><h3 className="font-sora text-sm font-bold text-on-surface">Top Countries</h3><p className="font-sans text-xs text-on-surface-variant">Geographic distribution of sessions</p></div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10">
-                    {gaData.countries?.length > 0 ? gaData.countries.map((item, idx) => {
-                      const max = gaData.countries[0]?.y || 1;
-                      const pct = Math.max(Math.round((item.y / max) * 100), 2);
-                      return (
-                        <div key={idx} className="flex items-center gap-3 py-1.5 group">
-                          <div className="font-mono text-xs text-on-surface-variant w-5 text-right">{idx + 1}</div>
-                          <div className="font-sans text-xs text-on-surface flex-1 truncate group-hover:text-electric-cyan transition-colors">{item.x || 'Unknown'}</div>
-                          <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                            <div style={{ width: `${pct}%` }} className="h-full bg-amber-500 rounded-full transition-all duration-700" />
+                  <div className="glass-card rounded-2xl border border-white/5 p-6 bg-surface-dark/30 space-y-5">
+                    <div><h3 className="font-sora text-sm font-bold text-on-surface">Traffic Sources</h3><p className="font-sans text-xs text-on-surface-variant">Where your visitors come from</p></div>
+                    <BarList items={gaData.sources} colorClass="bg-indigo-500" />
+                  </div>
+                  <div className="glass-card rounded-2xl border border-white/5 p-6 bg-surface-dark/30 space-y-5">
+                    <div><h3 className="font-sora text-sm font-bold text-on-surface">Browsers</h3><p className="font-sans text-xs text-on-surface-variant">Browser distribution</p></div>
+                    <BarList items={gaData.browsers} colorClass="bg-emerald-500" />
+                  </div>
+                  <div className="glass-card rounded-2xl border border-white/5 p-6 bg-surface-dark/30 space-y-5">
+                    <div><h3 className="font-sora text-sm font-bold text-on-surface">Devices</h3><p className="font-sans text-xs text-on-surface-variant">Desktop / Mobile / Tablet</p></div>
+                    <BarList items={gaData.devices} colorClass="bg-pink-500" />
+                  </div>
+                  <div className="glass-card rounded-2xl border border-white/5 p-6 bg-surface-dark/30 space-y-5 lg:col-span-2">
+                    <div><h3 className="font-sora text-sm font-bold text-on-surface">Top Countries</h3><p className="font-sans text-xs text-on-surface-variant">Geographic distribution of sessions</p></div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10">
+                      {gaData.countries?.length > 0 ? gaData.countries.map((item, idx) => {
+                        const max = gaData.countries[0]?.y || 1;
+                        const pct = Math.max(Math.round((item.y / max) * 100), 2);
+                        return (
+                          <div key={idx} className="flex items-center gap-3 py-1.5 group">
+                            <div className="font-mono text-xs text-on-surface-variant w-5 text-right">{idx + 1}</div>
+                            <div className="font-sans text-xs text-on-surface flex-1 truncate group-hover:text-electric-cyan transition-colors">{item.x || 'Unknown'}</div>
+                            <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                              <div style={{ width: `${pct}%` }} className="h-full bg-amber-500 rounded-full transition-all duration-700" />
+                            </div>
+                            <div className="font-mono text-[11px] text-on-surface-variant w-10 text-right">{item.y.toLocaleString()}</div>
                           </div>
-                          <div className="font-mono text-[11px] text-on-surface-variant w-10 text-right">{item.y.toLocaleString()}</div>
-                        </div>
-                      );
-                    }) : <p className="col-span-2 text-center font-mono text-xs text-on-surface-variant/50 py-6">No data</p>}
+                        );
+                      }) : <p className="col-span-2 text-center font-mono text-xs text-on-surface-variant/50 py-6">No data</p>}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2 text-on-surface-variant/40 font-mono text-[10px] justify-end">
-                <span className="material-symbols-outlined text-[12px]">info</span>
-                Powered by Google Analytics 4 Data API · Property {process.env.NEXT_PUBLIC_GA_PROPERTY_ID}
+                <div className="flex items-center gap-2 text-on-surface-variant/40 font-mono text-[10px] justify-end">
+                  <span className="material-symbols-outlined text-[12px]">info</span>
+                  Powered by Google Analytics 4 Data API · Property {process.env.NEXT_PUBLIC_GA_PROPERTY_ID}
+                </div>
+              </>
+            ) : (
+              <div className="glass-card rounded-2xl border border-white/5 p-12 bg-surface-dark/20 text-center max-w-xl mx-auto space-y-4">
+                <div className="w-16 h-16 bg-electric-cyan/10 text-electric-cyan rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
+                  <span className="material-symbols-outlined text-3xl">insights</span>
+                </div>
+                <h3 className="font-sora text-lg font-bold text-on-surface">No Traffic Data Yet</h3>
+                <p className="font-sans text-sm text-on-surface-variant leading-relaxed">
+                  Your Google Analytics 4 tag is successfully connected! However, Google hasn't processed or collected any visitor data for this time period yet (which can take 24–48 hours for new properties).
+                </p>
+                <div className="text-xs font-mono text-on-surface-variant/60 bg-black/20 rounded-lg p-3 inline-block">
+                  Tip: Visit your live website from multiple devices to generate initial traffic.
+                </div>
               </div>
-            </>
+            )
           )}
         </div>
       )}

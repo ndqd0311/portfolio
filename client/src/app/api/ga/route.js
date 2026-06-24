@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const GA_PROPERTY_ID = process.env.NEXT_PUBLIC_GA_PROPERTY_ID;
-const GA_SERVICE_ACCOUNT_KEY = process.env.GA_SERVICE_ACCOUNT_KEY;
+export const dynamic = 'force-dynamic';
 
 // ─── Simple JWT signer for Google OAuth2 ────────────────────────────────────
 async function getAccessToken(serviceAccountKey) {
@@ -102,8 +101,10 @@ function parseDateRows(report) {
     .sort((a, b) => a.t.localeCompare(b.t));
 }
 
-// ─── Main handler ────────────────────────────────────────────────────────────
 export async function GET(request) {
+  const GA_SERVICE_ACCOUNT_KEY = process.env.GA_SERVICE_ACCOUNT_KEY;
+  const GA_PROPERTY_ID = process.env.NEXT_PUBLIC_GA_PROPERTY_ID;
+
   if (!GA_SERVICE_ACCOUNT_KEY) {
     return NextResponse.json(
       { error: 'GA_SERVICE_ACCOUNT_KEY not configured.' },
