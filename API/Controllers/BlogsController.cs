@@ -16,6 +16,13 @@ public class BlogsController : ApiControllerBase
         return await Mediator.Send(new GetBlogsQuery(includeUnpublished));
     }
 
+    [HttpGet("stats")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<BlogStatsDto>> GetStats()
+    {
+        return await Mediator.Send(new GetBlogStatsQuery());
+    }
+
     [HttpGet("{slug}")]
     public async Task<ActionResult<BlogDto>> GetBlogBySlug(string slug)
     {

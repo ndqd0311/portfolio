@@ -19,3 +19,4 @@
 # Local configuration
 appsettings.Development.json
 .env*
+.vercel
