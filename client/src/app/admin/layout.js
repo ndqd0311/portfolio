@@ -47,6 +47,7 @@ export default function AdminLayout({ children }) {
     { name: 'Projects', path: '/admin/projects', icon: 'folder_open' },
     { name: 'Skills & Tech', path: '/admin/skills', icon: 'architecture' },
     { name: 'Blog Management', path: '/admin/blogs', icon: 'article' },
+    { name: 'Analytics', path: '/admin/analytics', icon: 'monitoring' },
     { name: 'Messages Inbox', path: '/admin/messages', icon: 'mail' },
     { name: 'System Settings', path: '/admin/settings', icon: 'settings' }
   ];

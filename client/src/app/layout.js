@@ -1,6 +1,7 @@
 import { Sora, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import DragonCursor from "./components/DragonCursor";
+import Script from "next/script";
 
 const sora = Sora({
   subsets: ["latin"],
@@ -47,6 +48,13 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="min-h-full bg-background text-on-surface font-sans overflow-x-hidden flex flex-col" suppressHydrationWarning>
+        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
+          <Script
+            src={process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL || "https://cloud.umami.is/script.js"}
+            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+            strategy="afterInteractive"
+          />
+        )}
         <DragonCursor />
         {children}
       </body>

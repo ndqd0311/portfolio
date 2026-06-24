@@ -521,6 +521,10 @@ export default function BlogDetailPage({ params }) {
         likesCount: isLiked ? prev.likesCount + 1 : Math.max(0, prev.likesCount - 1),
         hasLiked: isLiked
       }));
+      // Send like event to Umami
+      if (isLiked && typeof window !== 'undefined' && window.umami) {
+        window.umami.track('like_blog', { slug: slug, title: blog?.name });
+      }
     } catch (err) {
       console.error('Error toggling like:', err);
     } finally {
@@ -543,6 +547,10 @@ export default function BlogDetailPage({ params }) {
         body: { content: newComment }
       });
       setNewComment('');
+      // Send comment event to Umami
+      if (typeof window !== 'undefined' && window.umami) {
+        window.umami.track('comment_blog', { slug: slug, title: blog?.name });
+      }
       // Reload comments list
       const commentsData = await fetchApi(`/api/blogs/${slug}/comments`);
       setComments(commentsData || []);
