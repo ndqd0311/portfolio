@@ -48,11 +48,19 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="min-h-full bg-background text-on-surface font-sans overflow-x-hidden flex flex-col" suppressHydrationWarning>
+        {/* Google Analytics */}
         <Script
-          src="https://cloud.umami.is/script.js"
-          data-website-id="958f044a-8979-4d07-a36e-4dc0e27d6142"
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
           strategy="afterInteractive"
         />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}');
+          `}
+        </Script>
         <DragonCursor />
         {children}
       </body>
