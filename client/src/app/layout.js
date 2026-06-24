@@ -23,7 +23,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata = {
   title: "Nguyễn Đình Quang Dũng - Portfolio",
-  description: "Portfolio cá nhân và Blog +
+  description: "Portfolio cá nhân và Blog",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
